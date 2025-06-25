@@ -15,8 +15,8 @@ UNIT_CHOICES = [
 
 class SubscriptionBox(models.Model):
     schedule_id = models.AutoField(primary_key=True)
-    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, related_name='subscriptions')
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='subscriptions')
+    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, related_name='subscription')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='subscription')
     name = models.CharField(max_length=100)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     price = models.DecimalField(max_digits=10, decimal_places=2)
