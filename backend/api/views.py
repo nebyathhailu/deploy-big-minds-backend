@@ -1,8 +1,23 @@
-<<<<<<< HEAD
-from django.shortcuts import render
 from rest_framework import viewsets
+from subscription.models import SubscriptionBox, ScheduledItem
+from .serializers import SubscriptionBoxSerializer, ScheduledItemSerializer
+from django.shortcuts import render
 from orders.models import Order, OrderItem
 from .serializers import OrderSerializers, OrderItemSerializer
+from users.models import User
+from .serializers import UserSerializer
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
+
+
+
+class SubscriptionBoxViewSet(viewsets.ModelViewSet):
+    queryset = SubscriptionBox.objects.all()
+    serializer_class = SubscriptionBoxSerializer
+
+class ScheduledItemViewSet(viewsets.ModelViewSet):
+    queryset = ScheduledItem.objects.all()
+    serializer_class = ScheduledItemSerializer
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -11,13 +26,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
-=======
-from rest_framework import viewsets
-from users.models import User
-from .serializers import UserSerializer
-from rest_framework.filters import SearchFilter
-from django_filters.rest_framework import DjangoFilterBackend
-
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -25,4 +33,3 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['type']  
     search_fields = ['name', 'phone_number', 'location', 'shop_name']
->>>>>>> c5049ea63d7bfe85ce3066523e06663a6f3bd4e8
