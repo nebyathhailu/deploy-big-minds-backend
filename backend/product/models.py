@@ -1,5 +1,5 @@
 from django.db import models
-from user.models import Vendor
+from users.models import Vendor
 
 
 class Product(models.Model):
@@ -12,8 +12,6 @@ class Product(models.Model):
 
    def __str__(self):
        return self.name
-
-
 class VendorProduct(models.Model):
    product_ddetails_id = models.AutoField(primary_key=True)
    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="vendor_products")
