@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'payment',
     'users',
     'api',
+    'rest_framework',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
