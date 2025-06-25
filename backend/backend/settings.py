@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'subscription',
     'payment',
     'users',
+    'api',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
