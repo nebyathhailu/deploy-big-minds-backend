@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import Buyer, Vendor
-from product.models import Product
+# from product.models import Product
 
 
 
