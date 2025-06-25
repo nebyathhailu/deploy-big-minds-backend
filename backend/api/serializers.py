@@ -1,12 +1,7 @@
 from rest_framework import serializers
-from users.models import Vendor, Buyer
+from users.models import User
 
-class VendorSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Vendor
-        fields = '__all__'  
-
-class BuyerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Buyer
+        model = User
         fields = '__all__'

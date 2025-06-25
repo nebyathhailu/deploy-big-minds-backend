@@ -1,12 +1,13 @@
-
 from rest_framework import viewsets
-from users.models import Vendor, Buyer
-from .serializers import VendorSerializer, BuyerSerializer
+from users.models import User
+from .serializers import UserSerializer
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
-class VendorViewSet(viewsets.ModelViewSet):
-    queryset = Vendor.objects.all()
-    serializer_class = VendorSerializer
 
-class BuyerViewSet(viewsets.ModelViewSet):
-    queryset = Buyer.objects.all()
-    serializer_class = BuyerSerializer
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['type']  
+    search_fields = ['name', 'phone_number', 'location', 'shop_name']
