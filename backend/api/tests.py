@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -157,3 +158,22 @@ class OrderItemAPITests(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(OrderItem.objects.filter(pk=self.order_item.pk).exists())
+=======
+from django.test import TestCase
+from rest_framework.test import APITestCase
+from django.urls import reverse
+
+class VendorAPITest(APITestCase):
+    def test_create_vendor(self):
+        url = reverse('vendor-list')  
+        data = {
+            "name": "Test Vendor",
+            "phone_number": "123456789",
+            "password_hash": "hash",
+            "location": "Test Location",
+            "shop_name": "Shop",
+            "till_number": 123
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+>>>>>>> c5049ea63d7bfe85ce3066523e06663a6f3bd4e8
