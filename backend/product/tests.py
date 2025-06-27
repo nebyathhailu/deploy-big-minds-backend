@@ -1,17 +1,18 @@
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from users.models import Vendor
+from users.models import User
 from .models import Product, VendorProduct
 
 class ProductVendorProductModelTest(TestCase):
     def setUp(self):
-        self.vendor = Vendor.objects.create(
+        self.vendor = User.objects.create(
             name="Nebyat",
             phone_number="254922442",
             password_hash="1010",
             location="karen",
             shop_name="Safi",
-            till_number=123456  
+            till_number=123456,
+            type="vendor"
         )
 
         self.product = Product.objects.create(
@@ -51,5 +52,6 @@ class ProductVendorProductModelTest(TestCase):
         )
         self.assertEqual(vendor_product.vendor, self.vendor)
         self.assertEqual(vendor_product.product, self.product)
+    
         self.assertIn(vendor_product, self.vendor.vendor_products.all())
         self.assertIn(vendor_product, self.product.product_variants.all())

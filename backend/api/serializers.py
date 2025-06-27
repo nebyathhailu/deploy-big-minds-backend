@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Product, VendorProduct
-from users.models import Vendor
+from product.models import Product, VendorProduct
+from users.models import User 
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,13 +9,13 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Vendor
-        fields = ['vendor_id', 'name']  
+        model = User  
+        fields = ['user_id', 'name']
 
 class VendorProductSerializer(serializers.ModelSerializer):
     vendor = VendorSerializer(read_only=True)
     vendor_id = serializers.PrimaryKeyRelatedField(
-        queryset=Vendor.objects.all(), source='vendor', write_only=True
+        queryset=User.objects.filter(type='vendor'), source='vendor', write_only=True
     )
     product = ProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(
@@ -24,6 +24,6 @@ class VendorProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = VendorProduct
         fields = [
-            'product_ddetails_id', 'vendor', 'vendor_id', 'product', 'product_id',
+            'product_details_id', 'vendor', 'vendor_id', 'product', 'product_id',
             'price', 'quantity', 'description', 'added_on', 'updated_at'
         ]

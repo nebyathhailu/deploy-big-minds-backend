@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import Vendor
+from users.models import User
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
@@ -13,8 +13,7 @@ class Product(models.Model):
 
 class VendorProduct(models.Model):
     product_ddetails_id = models.AutoField(primary_key=True)
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="api_vendor_products")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_variants")
+    
     price = models.FloatField()
     quantity = models.IntegerField()
     description = models.CharField(max_length=100)
