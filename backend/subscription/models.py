@@ -1,22 +1,21 @@
 from django.db import models
-from users.models import Buyer, Vendor
+from users.models import User
 from products.models import Product
 
 FREQUENCY_CHOICES = [
-   ('weekly', 'Weekly'),
-   ('monthly', 'Monthly'),
-   ('Twice a week', 'Twice a week'),
+    ('weekly', 'Weekly'),
+    ('monthly', 'Monthly'),
+    ('Twice a week', 'Twice a week'),
 ]
 
 UNIT_CHOICES = [
-  ('kg', 'Kg'),
-  ('bunch', 'Bunch'),
+    ('kg', 'Kg'),
+    ('bunch', 'Bunch'),
 ]
 
 class SubscriptionBox(models.Model):
     schedule_id = models.AutoField(primary_key=True)
-    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, related_name='subscription')
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='subscription')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscription')
     name = models.CharField(max_length=100)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -24,7 +23,7 @@ class SubscriptionBox(models.Model):
     status = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"Subscription {self.name} for {self.buyer.name}"
+        return f"Subscription {self.name} for {self.user.name}"
 
 class ScheduledItem(models.Model):
     scheduled_item_id = models.AutoField(primary_key=True)
