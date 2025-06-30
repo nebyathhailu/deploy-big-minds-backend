@@ -1,4 +1,4 @@
-# Safi Green Backend setup
+# Safi Green Backend Setup
 
 ## Big Minds members 
 | Full Names               | 
