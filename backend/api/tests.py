@@ -430,8 +430,8 @@ class SubscriptionBoxAPITest(TestCase):
 
 class VendorAPITest(APITestCase):
     def test_create_vendor(self):
-        # Make sure your URLs and views support this, or update to the current users endpoint
-        url = reverse('user-list')  # update to your current user endpoint
+
+        url = reverse('user-list')  
         data = {
             "name": "Test Vendor",
             "phone_number": "123456789",
