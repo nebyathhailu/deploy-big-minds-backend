@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import User
-from products.models import Product
+from product.models import Product
 
 FREQUENCY_CHOICES = [
     ('weekly', 'Weekly'),
