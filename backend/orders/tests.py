@@ -1,24 +1,26 @@
 from django.test import TestCase
-from users.models import Vendor, Buyer
-from products.models import Product
+from users.models import User
+from product.models import Product
 from .models import Order, OrderItem
 from decimal import Decimal
 
 class OrderModelTest(TestCase):
     def setUp(self):
-        self.vendor = Vendor.objects.create(
+        self.vendor = User.objects.create(
             name="Vendor1",
             phone_number="1234567890",
             password_hash="hashedpassword",
             location="Karen",
             shop_name="Vendor Shop",
-            till_number=1001
+            till_number=1001,
+            type="vendor"
         )
-        self.buyer = Buyer.objects.create(
+        self.buyer = User.objects.create(
             name="Buyer1",
             password_hash="hashedpassword",
             location="Karen",
-            phone_number="0987654321"
+            phone_number="0987654321",
+            type="customer"
         )
         self.product = Product.objects.create(
             name="Mango",
@@ -91,4 +93,3 @@ class OrderModelTest(TestCase):
         )
         self.product.delete()
         self.assertFalse(OrderItem.objects.filter(pk=order_item.pk).exists())
-

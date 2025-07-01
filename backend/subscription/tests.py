@@ -2,7 +2,7 @@
 from django.test import TestCase
 from subscription.models import SubscriptionBox, ScheduledItem
 from users.models import Buyer, Vendor
-from products.models import Product
+from product.models import Product
 
 
 class SubscriptionBoxModelTest(TestCase):
