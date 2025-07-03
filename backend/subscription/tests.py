@@ -4,6 +4,7 @@ from users.models import User
 from products.models import Product
 from .models import SubscriptionBox, ScheduledItem
 
+
 class SubscriptionBoxModelTest(TestCase):
     def setUp(self):
         self.buyer = User.objects.create(

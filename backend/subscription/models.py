@@ -30,6 +30,8 @@ class SubscriptionBox(models.Model):
         limit_choices_to={'type': 'vendor'},
         help_text="User of type 'vendor'",
     )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscription')
     name = models.CharField(max_length=100)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     price = models.PositiveIntegerField()
@@ -37,7 +39,7 @@ class SubscriptionBox(models.Model):
     status = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"Subscription {self.name} for {self.buyer.name}"
+        return f"Subscription {self.name} for {self.user.name}"
 
     def clean(self):
         super().clean()
