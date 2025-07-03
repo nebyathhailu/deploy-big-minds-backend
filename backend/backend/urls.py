@@ -16,11 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 from rest_framework.authtoken.views import obtain_auth_token
+def home(request):
+    return HttpResponse("Welcome to your Django project!")
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api-token-auth/', obtain_auth_token),
+    path('', home, name='home'),
 ]
-
 

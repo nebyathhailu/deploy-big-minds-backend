@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase, APIClient
 from product.models import Product, VendorProduct
 from orders.models import Order, OrderItem
 from subscription.models import SubscriptionBox, ScheduledItem
+from cart.models import Cart, CartItem
 
 class APITestCase(TestCase):
     def setUp(self):
@@ -443,3 +444,72 @@ class VendorAPITest(APITestCase):
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 201)
+
+
+class CartItemAPITest(APITestCase):
+    def setUp(self):
+        self.customer = User.objects.create(name="API Customer", type="customer")
+        self.product = Product.objects.create(
+            name="API Product",
+            category="API Category",
+            unit="kg"
+        )
+        self.cart = Cart.objects.create(customer=self.customer)
+    def test_create_cartitem(self):
+        url = reverse('cart-item-list')
+        data = {
+            "product_name": self.product.name,
+            "customer_name": self.customer.name,
+            "quantity": 2
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CartItem.objects.count(), 1)
+        cart_item = CartItem.objects.first()
+        self.assertEqual(cart_item.product, self.product)
+        self.assertEqual(cart_item.cart_id.customer, self.customer)
+        self.assertEqual(cart_item.quantity, 2)
+    def test_get_cartitem_list(self):
+        CartItem.objects.create(cart_id=self.cart, product=self.product, quantity=1)
+        url = reverse('cart-item-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+    def test_update_cartitem(self):
+        cart_item = CartItem.objects.create(cart_id=self.cart, product=self.product, quantity=1)
+        url = reverse('cart-item-detail', kwargs={'pk': cart_item.cart_item_id})
+        data = {
+            "quantity": 5,
+            "product_name": cart_item.product.name,
+            "customer_name": cart_item.cart_id.customer.name
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cart_item.refresh_from_db()
+        self.assertEqual(cart_item.quantity, 5)
+    def test_delete_cartitem(self):
+        cart_item = CartItem.objects.create(cart_id=self.cart, product=self.product, quantity=1)
+        url = reverse('cart-item-detail', kwargs={'pk': cart_item.cart_item_id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(CartItem.objects.count(), 0)
+class CartAPITest(APITestCase):
+    def setUp(self):
+        self.customer = User.objects.create(name="API Cart Customer", type="customer")
+    def test_create_cart(self):
+        url = reverse('cart-list')
+        data = {
+            "customer_name": self.customer.name
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Cart.objects.count(), 1)
+        cart = Cart.objects.first()
+        self.assertEqual(cart.customer, self.customer)
+    def test_get_cart_list(self):
+        Cart.objects.create(customer=self.customer)
+        url = reverse('cart-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+
