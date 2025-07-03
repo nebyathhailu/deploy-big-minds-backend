@@ -15,8 +15,10 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
     type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    
     shop_name = models.CharField(max_length=100, blank=True, null=True)
     till_number = models.IntegerField(blank=True, null=True, unique=True)
-
+    
+  
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
