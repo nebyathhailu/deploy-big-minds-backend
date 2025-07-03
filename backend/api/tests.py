@@ -8,6 +8,7 @@ from product.models import Product, VendorProduct
 from orders.models import Order, OrderItem
 from subscription.models import SubscriptionBox, ScheduledItem
 from decimal import Decimal
+from cart.models import Cart, CartItem
 
 class APITestCase(TestCase):
     def setUp(self):
