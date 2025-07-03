@@ -238,3 +238,4 @@ class CartItemAPITest(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(CartItem.objects.count(), 1)
+        
