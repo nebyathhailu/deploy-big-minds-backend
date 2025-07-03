@@ -4,8 +4,8 @@ from product.models import Product
 
 class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
-    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders_as_vendor')
-    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders_as_buyer')
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vendor_orders', limit_choices_to={'type':'vendor'})
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buyer_orders', limit_choices_to={'type':'customer'})
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=100)
     order_date = models.DateTimeField(auto_now_add=True)

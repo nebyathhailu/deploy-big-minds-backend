@@ -177,17 +177,30 @@ class ScheduledItemSerializer(serializers.ModelSerializer):
         model = ScheduledItem
         fields = '__all__'
 
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = '__all__'
-
-class OrderItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset = Product.objects.all(),
+        source = 'product',
+        write_only=True
+    )
+    class Meta:
+        model = OrderItem
+        fields = "__all__"
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(source='orderitem_set', many=True, read_only=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    buyer_name = serializers.CharField(source='buyer.name', read_only=True)
+    class Meta:
+        model = Order
+        fields = "__all__"
+
