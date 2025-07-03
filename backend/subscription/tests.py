@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from users.models import User
-from products.models import Product
+from product.models import Product
 from .models import SubscriptionBox, ScheduledItem
 
 
@@ -32,7 +32,6 @@ class SubscriptionBoxModelTest(TestCase):
         self.assertEqual(sub_box.vendor.type, 'vendor')
 
     def test_subscription_box_with_invalid_buyer_vendor(self):
-    
         vendor_user = User.objects.create(
             name='Not a Buyer', type='vendor'
         )
@@ -42,7 +41,6 @@ class SubscriptionBoxModelTest(TestCase):
             )
             box.full_clean()
 
-        
         customer_user = User.objects.create(
             name='Not a Vendor', type='customer'
         )
