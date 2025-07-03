@@ -1,14 +1,13 @@
-from django.test import TestCase
+
+from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
-from users.models import User  
-from payment.models import Payment
-from rest_framework.test import APITestCase, APIClient
-from product.models import Product, VendorProduct
-from orders.models import Order, OrderItem
+from users.models import User
+from products.models import Product
 from subscription.models import SubscriptionBox, ScheduledItem
 from decimal import Decimal
 from cart.models import Cart, CartItem
+
 
 class APITestCase(TestCase):
     def setUp(self):

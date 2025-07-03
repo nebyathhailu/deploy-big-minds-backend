@@ -1,93 +1,74 @@
-
 from django.test import TestCase
-from subscription.models import SubscriptionBox, ScheduledItem
-from users.models import Buyer, Vendor
-from product.models import Product
+from django.core.exceptions import ValidationError
+from users.models import User
+from products.models import Product
+from .models import SubscriptionBox, ScheduledItem
 
 
 class SubscriptionBoxModelTest(TestCase):
-   def setUp(self):
+    def setUp(self):
+        self.buyer = User.objects.create(
+            name='Buyer One', type='customer'
+        )
+        self.vendor = User.objects.create(
+            name='Vendor One', type='vendor'
+        )
     
-       self.buyer = Buyer.objects.create(
-           name="Test Buyer",
-           password_hash="pw",
-           location="loc",
-           phone_number="123"
-       )
-       self.vendor = Vendor.objects.create(
-           name="Test Vendor",
-           phone_number="987",
-           password_hash="pw",
-           profile_picture=None,
-           location="Vendor Loc",
-           shop_name="Shop",
-           till_number=12345
-       )
-       self.product = Product.objects.create(
-           name="Banana",
-           category="Fruit",
-           product_image=None,
-           unit="kg"
-       )
+        self.product = Product.objects.create(
+            name='Carrot'
+        )
 
+    def test_subscription_box_creation(self):
+        sub_box = SubscriptionBox.objects.create(
+            buyer=self.buyer,
+            vendor=self.vendor,
+            name="Weekly Veggie Box",
+            frequency="weekly",
+            price=100,
+            status="active"
+        )
+        self.assertEqual(str(sub_box), f"Subscription Weekly Veggie Box for {self.buyer.name}")
+        self.assertEqual(sub_box.buyer.type, 'customer')
+        self.assertEqual(sub_box.vendor.type, 'vendor')
 
-   def test_subscription_box_creation(self):
-       box = SubscriptionBox.objects.create(
-           buyer=self.buyer,
-           vendor=self.vendor,
-           name="My Box",
-           frequency="monthly",
-           price=10.50,
-           status="active"
-       )
-       self.assertEqual(box.name, "My Box")
-       self.assertEqual(box.frequency, "monthly")
-       self.assertEqual(box.price, 10.50)
-       self.assertEqual(box.status, "active")
-       self.assertEqual(box.buyer, self.buyer)
-       self.assertEqual(box.vendor, self.vendor)
-       self.assertTrue(str(box).startswith("Subscription My Box for"))
+    def test_subscription_box_with_invalid_buyer_vendor(self):
+    
+        vendor_user = User.objects.create(
+            name='Not a Buyer', type='vendor'
+        )
+        with self.assertRaises(ValidationError):
+            box = SubscriptionBox(
+                buyer=vendor_user, vendor=self.vendor, name="Test", frequency="weekly", price=100, status="active"
+            )
+            box.full_clean()
 
+        
+        customer_user = User.objects.create(
+            name='Not a Vendor', type='customer'
+        )
+        with self.assertRaises(ValidationError):
+            box = SubscriptionBox(
+                buyer=self.buyer, vendor=customer_user, name="Test", frequency="weekly", price=100, status="active"
+            )
+            box.full_clean()
 
-   def test_scheduled_item_creation(self):
-       box = SubscriptionBox.objects.create(
-           buyer=self.buyer,
-           vendor=self.vendor,
-           name="Test Box",
-           frequency="weekly",
-           price=25.00,
-           status="active"
-       )
-       item = ScheduledItem.objects.create(
-           product=self.product,
-           schedule=box,
-           price_per_unit=3.25,
-           quantity=2,
-           unit="kg"
-       )
-       self.assertEqual(item.product, self.product)
-       self.assertEqual(item.schedule, box)
-       self.assertEqual(item.price_per_unit, 3.25)
-       self.assertEqual(item.quantity, 2)
-       self.assertEqual(item.unit, "kg")
-       self.assertIn("Banana", str(item))
-       self.assertIn("2kg", str(item))
-
-
-   def test_subscription_box_with_items(self):
-       box = SubscriptionBox.objects.create(
-           buyer=self.buyer,
-           vendor=self.vendor,
-           name="Fruit Box",
-           frequency="Twice a week",
-           price=30.00,
-           status="pending"
-       )
-       ScheduledItem.objects.create(
-           product=self.product,
-           schedule=box,
-           price_per_unit=5.00,
-           quantity=1,
-           unit="bunch"
-       )
-       self.assertEqual(box.scheduled_items.count(), 1)
+    def test_scheduled_item_creation(self):
+        sub_box = SubscriptionBox.objects.create(
+            buyer=self.buyer,
+            vendor=self.vendor,
+            name="Weekly Veggie Box",
+            frequency="weekly",
+            price=100,
+            status="active"
+        )
+        scheduled_item = ScheduledItem.objects.create(
+            product=self.product,
+            schedule=sub_box,
+            price_per_unit=5.00,
+            quantity=2,
+            unit='kg'
+        )
+        self.assertEqual(str(scheduled_item),
+                         f"2kg {self.product.name} (Schedule {sub_box.schedule_id})")
+        self.assertEqual(scheduled_item.schedule, sub_box)
+        self.assertEqual(scheduled_item.product, self.product)
