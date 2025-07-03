@@ -2,9 +2,8 @@ env/
 __pycache__/
 *.pyc
 db.sqlite3
-
-
 # Database backups
 db*.backup
 db_backup.json
 *.sqlite3
+backups/
