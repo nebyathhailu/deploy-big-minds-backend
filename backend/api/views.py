@@ -47,9 +47,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_id = self.request.query_params.get('user_id')
+        qs = self.queryset
         if user_id:
-            return self.queryset.filter(buyer__user_id=user_id)
-        return Order.objects.all()
+            qs = qs.filter(buyer__user_id=user_id)
+        return qs
     
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -57,10 +58,10 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         order_id = self.request.query_params.get('order')
+        qs = self.queryset
         if order_id:
-            return self.queryset.filter(order__order_id = order_id)
-        return OrderItem.objects.all()
-
+            qs = qs.filter(order_id=order_id)
+        return qs
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()

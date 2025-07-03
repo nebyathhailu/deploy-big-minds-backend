@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase, APIClient
 from product.models import Product, VendorProduct
 from orders.models import Order, OrderItem
 from subscription.models import SubscriptionBox, ScheduledItem
+from decimal import Decimal
 
 class APITestCase(TestCase):
     def setUp(self):
@@ -157,165 +158,6 @@ class OrderPaymentAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Payment.objects.filter(pk=payment.pk).exists())
 
-
-class OrderAPITests(APITestCase):
-    def setUp(self):
-        self.vendor = User.objects.create(
-            name="Test Vendor",
-            phone_number="1234567890",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            shop_name="Vendor Shop",
-            till_number=1001,
-            type="vendor"
-        )
-        self.buyer = User.objects.create(
-            name="Test Buyer",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            phone_number="0987654321",
-            type="customer"
-        )
-        self.product = Product.objects.create(
-            name="Test Product",
-            category="Groceries",
-            unit="kg",
-        )
-        self.order = Order.objects.create(
-            vendor=self.vendor,
-            buyer=self.buyer,
-            total_price=200.00,
-            status="Pending"
-        )
-        self.order_item = OrderItem.objects.create(
-            order=self.order,
-            product=self.product,
-            quantity=2,
-            price_at_order=100.00
-        )
-
-    def test_list_orders(self):
-        url = reverse('orders-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) >= 1)
-
-    def test_create_order(self):
-        url = reverse('orders-list')
-        data = {
-            "vendor": self.vendor.pk,
-            "buyer": self.buyer.pk,
-            "total_price": 300.00,
-            "status": "Confirmed"
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["total_price"], "300.00")
-
-    def test_retrieve_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["order_id"], self.order.pk)
-
-    def test_update_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        data = {
-            "vendor": self.vendor.pk,
-            "buyer": self.buyer.pk,
-            "total_price": 250.00,
-            "status": "Shipped"
-        }
-        response = self.client.put(url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["status"], "Shipped")
-
-    def test_delete_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
-
-
-class OrderItemAPITests(APITestCase):
-    def setUp(self):
-        self.vendor = User.objects.create(
-            name="Test Vendor",
-            phone_number="1234567890",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            shop_name="Vendor Shop",
-            till_number=1002,
-            type="vendor"
-        )
-        self.buyer = User.objects.create(
-            name="Test Buyer",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            phone_number="0987654322",
-            type="customer"
-        )
-        self.product = Product.objects.create(
-            name="Mango",
-            category="Fruit",
-            unit="Bunch",
-        )
-        self.order = Order.objects.create(
-            vendor=self.vendor,
-            buyer=self.buyer,
-            total_price=150.00,
-            status="Pending"
-        )
-        self.order_item = OrderItem.objects.create(
-            order=self.order,
-            product=self.product,
-            quantity=1,
-            price_at_order=150.00
-        )
-
-    def test_list_order_items(self):
-        url = reverse('order-items-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) >= 1)
-
-    def test_create_order_item(self):
-        url = reverse('order-items-list')
-        data = {
-            "order": self.order.pk,
-            "product": self.product.pk,
-            "quantity": 3,
-            "price_at_order": 300.00
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["quantity"], 3)
-
-    def test_retrieve_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["item_id"], self.order_item.pk)
-
-    def test_update_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
-        data = {
-            "order": self.order.pk,
-            "product": self.product.pk,
-            "quantity": 5,
-            "price_at_order": 750.00
-        }
-        response = self.client.put(url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["quantity"], 5)
-
-    def test_delete_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(OrderItem.objects.filter(pk=self.order_item.pk).exists())
-
-
 class SubscriptionBoxAPITest(TestCase):
    def setUp(self):
        self.client = APIClient()
@@ -443,3 +285,167 @@ class VendorAPITest(APITestCase):
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 201)
+
+class OrderAPITests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.vendor = User.objects.create(
+            name="Test Vendor",
+            phone_number="1234567890",
+            password_hash="hashedpassword",
+            location="Nairobi",
+            shop_name="Vendor Shop",
+            till_number=1001,
+            type="vendor"
+        )
+        cls.buyer = User.objects.create(
+            name="Test Buyer",
+            password_hash="hashedpassword",
+            location="Nairobi",
+            phone_number="0987654321",
+            type="customer"
+        )
+        cls.product = Product.objects.create(
+            name="Test Product",
+            category="Groceries",
+            unit="kg",
+        )
+        cls.order = Order.objects.create(
+            vendor=cls.vendor,
+            buyer=cls.buyer,
+            total_price=200.00,
+            status="Pending"
+        )
+        cls.order_item = OrderItem.objects.create(
+            order=cls.order,
+            product=cls.product,
+            quantity=2,
+            price_at_order=100.00
+        )
+
+    def test_list_orders(self):
+        url = reverse('orders-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+        sample = response.data[0]
+        self.assertIn("order_id", sample)
+
+    def test_create_order(self):
+        url = reverse('orders-list')
+        data = {
+            "vendor": self.vendor.pk,
+            "buyer": self.buyer.pk,
+            "total_price": 300.00,
+            "status": "Confirmed"
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Decimal(response.data["total_price"]), Decimal("300.00"))
+        self.assertEqual(response.data["status"], "Confirmed")
+
+    def test_retrieve_order(self):
+        url = reverse('orders-detail', args=[self.order.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["order_id"], self.order.pk)
+
+    def test_update_order(self):
+        url = reverse('orders-detail', args=[self.order.pk])
+        data = {
+            "vendor": self.vendor.pk,
+            "buyer": self.buyer.pk,
+            "total_price": 250.00,
+            "status": "Shipped"
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "Shipped")
+        self.assertEqual(Decimal(response.data["total_price"]), Decimal("250.00"))
+
+    def test_delete_order(self):
+        url = reverse('orders-detail', args=[self.order.pk])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
+
+
+class OrderItemAPITests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.vendor = User.objects.create(
+            name="Test Vendor",
+            phone_number="1234567890",
+            password_hash="hashedpassword",
+            location="Nairobi",
+            shop_name="Vendor Shop",
+            till_number=1002,
+            type="vendor"
+        )
+        cls.buyer = User.objects.create(
+            name="Test Buyer",
+            password_hash="hashedpassword",
+            location="Nairobi",
+            phone_number="0987654322",
+            type="customer"
+        )
+        cls.product = Product.objects.create(
+            name="Mango",
+            category="Fruit",
+            unit="Bunch",
+        )
+        cls.order = Order.objects.create(
+            vendor=cls.vendor,
+            buyer=cls.buyer,
+            total_price=150.00,
+            status="Pending"
+        )
+        cls.order_item = OrderItem.objects.create(
+            order=cls.order,
+            product=cls.product,
+            quantity=1,
+            price_at_order=150.00
+        )
+
+    def test_list_order_items(self):
+        url = reverse('order-items-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertIn("item_id", response.data[0])
+
+    def test_create_order_item(self):
+        url = reverse('order-items-list')
+        data = {
+            "order": self.order.pk,
+            "product_id": self.product.pk,
+            "quantity": 3,
+            "price_at_order": 300.00
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["quantity"], 3)
+
+    def test_retrieve_order_item(self):
+        url = reverse('order-items-detail', args=[self.order_item.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["item_id"], self.order_item.pk)
+
+    def test_update_order_item(self):
+        url = reverse('order-items-detail', args=[self.order_item.pk])
+        data = {
+            "order": self.order.pk,
+            "product_id": self.product.pk,
+            "quantity": 5,
+            "price_at_order": 750.00
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["quantity"], 5)
+
+    def test_delete_order_item(self):
+        url = reverse('order-items-detail', args=[self.order_item.pk])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(OrderItem.objects.filter(pk=self.order_item.pk).exists())
