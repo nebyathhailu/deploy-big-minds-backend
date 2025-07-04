@@ -34,8 +34,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'cart', 
     'django_filters',
-    'location',
     'longitude',
+    "corsheaders",
 
 ]
 
@@ -48,6 +48,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
@@ -104,3 +106,5 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+
+CORS_ALLOW_ALL_ORIGINS = True
