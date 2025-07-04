@@ -34,6 +34,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'cart', 
     'django_filters',
+    'location',
+    'longitude',
+
 ]
 
 
