@@ -25,5 +25,6 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('api-token-auth/', obtain_auth_token),
     path('', home, name='home'),
+    path('api/', include('longitude.urls')),  # Add this
 ]
 

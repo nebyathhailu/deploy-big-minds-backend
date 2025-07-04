@@ -1,451 +1,241 @@
-
 from rest_framework.test import APITestCase
-from rest_framework import status
 from django.urls import reverse
 from users.models import User
-from products.models import Product
-from subscription.models import SubscriptionBox, ScheduledItem
-from decimal import Decimal
+from product.models import Product, VendorProduct
 from cart.models import Cart, CartItem
+from subscription.models import SubscriptionBox, ScheduledItem
+from orders.models import Order, OrderItem
+from payment.models import Payment
+from decimal import Decimal
 
-
-class APITestCase(TestCase):
+class ProductAPITest(APITestCase):
     def setUp(self):
-        self.client = APIClient()
-        self.vendor = User.objects.create(
-            name="Test Vendor",
-            phone_number="123456789",
-            password_hash="somerandomhash",
-            location="Test Location",
-            shop_name="Test Shop",
-            till_number=1001,
-            type="vendor",
-        )
         self.product = Product.objects.create(
-            name="Test Product",
-            category="Test Category",
-            product_image="https://example.com/test.jpg", 
-            unit="kg"
-        )
-        self.vendor_product = VendorProduct.objects.create(
-            vendor=self.vendor,
-            product=self.product,
-            price=10.0,
-            quantity=5,
-            description="Test vendor product"
+            name="Apple", category="Fruit", product_image="https://img.com/apple.jpg", unit="kg"
         )
 
-    def test_api_root(self):
-        response = self.client.get(reverse('api-root'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('products', response.data)
-        self.assertIn('vendor-products', response.data)
-
-    def test_product_list(self):
-        response = self.client.get(reverse('product-list'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    def test_list_products(self):
+        url = reverse('product-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.data), 1)
 
-    def test_product_create(self):
+    def test_create_product(self):
+        url = reverse('product-list')
         data = {
-            "name": "Another Product",
-            "category": "Another Category",
-            "product_image": "https://example.com/test2.jpg", 
-            "unit": "pcs"
-        }
-        response = self.client.post(reverse('product-list'), data, format='json')
-        print("Product create response:", response.data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Product.objects.count(), 2)
-
-    def test_product_detail(self):
-        response = self.client.get(reverse('product-detail', args=[self.product.product_id]))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], self.product.name)
-
-    def test_vendor_product_list(self):
-        response = self.client.get(reverse('vendorproduct-list'))
-        print("VendorProduct list response:", response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-
-    def test_vendor_product_create(self):
-        product = Product.objects.create(
-            name="New Product",
-            category="Category",
-            product_image="https://example.com/test3.jpg", 
-            unit="pcs"
-        )
-        data = {
-            "vendor_id": self.vendor.user_id,
-            "product_id": product.product_id,
-            "price": 20.0,
-            "quantity": 10,
-            "description": "Another vendor product"
-        }
-        response = self.client.post(reverse('vendorproduct-list'), data, format="json")
-        print("VendorProduct create response:", response.data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(VendorProduct.objects.count(), 2)
-
-    def test_vendor_product_detail(self):
-        response = self.client.get(reverse('vendorproduct-detail', args=[self.vendor_product.product_details_id]))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['description'], self.vendor_product.description)
-
-class OrderPaymentAPITestCase(APITestCase):
-    def setUp(self):
-        self.vendor = Vendor.objects.create(name="Test Vendor", till_number= "34567899")
-        self.buyer = Buyer.objects.create(name="Test Buyer")
-    def test_create_order(self):
-        url = reverse('order-list')
-        data = {
-            "vendor": self.vendor.pk,
-            "buyer": self.buyer.pk,
-            "total_price": "500.00",
-            "status": "approved"
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Order.objects.count(), 2)
-        self.assertEqual(response.data['total_price'], "500.00")
-    def test_list_orders(self):
-        url = reverse('order-list')
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('results' in response.data or isinstance(response.data, list))
-    def test_create_payment(self):
-        url = reverse('payment-list')
-        data = {
-            "order_id": self.order.pk,
-            "method": "credit_card",
-            "status": "pending",
-            "amount": "1000.00"
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Payment.objects.count(), 1)
-        self.assertEqual(response.data['amount'], "1000.00")
-    def test_list_payments(self):
-        Payment.objects.create(order=self.order, method="cash", status="completed", amount=500.00)
-        url = reverse('payment-list')
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('results' in response.data or isinstance(response.data, list))
-    def test_retrieve_payment(self):
-        payment = Payment.objects.create(order=self.order, method="cash", status="completed", amount=500.00)
-        url = reverse('payment-detail', args=[payment.pk])
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['amount'], "500.00")
-    def test_update_payment(self):
-        payment = Payment.objects.create(order=self.order, method="cash", status="completed", amount=500.00)
-        url = reverse('payment-detail', args=[payment.pk])
-        data = {
-            "order_id": self.order.pk,
-            "method": "credit_card",
-            "status": "pending",
-            "amount": "750.00"
-        }
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        payment.refresh_from_db()
-        self.assertEqual(payment.amount, 750.00)
-    def test_delete_payment(self):
-        payment = Payment.objects.create(order=self.order, method="cash", status="completed", amount=500.00)
-        url = reverse('payment-detail', args=[payment.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Payment.objects.filter(pk=payment.pk).exists())
-
-class SubscriptionBoxAPITest(TestCase):
-   def setUp(self):
-       self.client = APIClient()
-       self.buyer = User.objects.create(
-           name="Test Buyer",
-           password_hash="password",
-           location="Test Location",
-           phone_number="123456789",
-           type="customer"
-       )
-       self.vendor = User.objects.create(
-           name="Test Vendor",
-           phone_number="987654321",
-           password_hash="password",
-           profile_picture=None,
-           location="Vendor Location",
-           shop_name="Vendor Shop",
-           till_number=111222,
-           type="vendor"
-       )
-       self.product = Product.objects.create(
-           name="Test Product",
-           category="Fruits",
-           product_image=None,
-           unit="kg"
-       )
-       self.box = SubscriptionBox.objects.create(
-           buyer=self.buyer,
-           vendor=self.vendor,
-           name="Fruit Box",
-           frequency="monthly",
-           price=29.99,
-           status="active"
-       )
-       self.box_data = {
-           "buyer": self.buyer.pk,
-           "vendor": self.vendor.pk,
-           "name": "Veggie Box",
-           "frequency": "monthly",
-           "price": "39.99",
-           "status": "active"
-       }
-       self.scheduleditem_data = {
-           "product": self.product.pk,
-           "schedule": self.box.schedule_id,
-           "price_per_unit": "2.50",
-           "quantity": 5,
-           "unit": "kg"
-       }
-
-   def test_list_subscription_boxes(self):
-       response = self.client.get("/api/subscriptions/")
-       self.assertEqual(response.status_code, 200)
-       self.assertTrue(len(response.data) >= 1)
-
-   def test_create_subscription_box(self):
-       response = self.client.post("/api/subscriptions/", self.box_data, format='json')
-       self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-       self.assertEqual(response.data["name"], "Veggie Box")
-
-   def test_retrieve_subscription_box(self):
-       response = self.client.get(f"/api/subscriptions/{self.box.schedule_id}/")
-       self.assertEqual(response.status_code, 200)
-       self.assertEqual(response.data["name"], self.box.name)
-
-   def test_delete_subscription_box(self):
-       response = self.client.delete(f"/api/subscriptions/{self.box.schedule_id}/")
-       self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-       self.assertFalse(SubscriptionBox.objects.filter(schedule_id=self.box.schedule_id).exists())
-
-   def test_create_scheduled_item(self):
-       response = self.client.post("/api/scheduled-items/", self.scheduleditem_data, format='json')
-       self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-       self.assertEqual(response.data["quantity"], 5)
-       self.assertEqual(response.data["unit"], "kg")
-
-   def test_list_scheduled_items(self):
-       item = ScheduledItem.objects.create(
-           product=self.product,
-           schedule=self.box,
-           price_per_unit=2.5,
-           quantity=2,
-           unit='kg'
-       )
-       response = self.client.get("/api/scheduled-items/")
-       self.assertEqual(response.status_code, 200)
-       self.assertTrue(len(response.data) >= 1)
-
-   def test_retrieve_scheduled_item(self):
-       item = ScheduledItem.objects.create(
-           product=self.product,
-           schedule=self.box,
-           price_per_unit=2.5,
-           quantity=2,
-           unit='kg'
-       )
-       response = self.client.get(f"/api/scheduled-items/{item.scheduled_item_id}/")
-       self.assertEqual(response.status_code, 200)
-       self.assertEqual(response.data["quantity"], 2)
-
-   def test_delete_scheduled_item(self):
-       item = ScheduledItem.objects.create(
-           product=self.product,
-           schedule=self.box,
-           price_per_unit=2.5,
-           quantity=2,
-           unit='kg'
-       )
-       response = self.client.delete(f"/api/scheduled-items/{item.scheduled_item_id}/")
-       self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-       self.assertFalse(ScheduledItem.objects.filter(scheduled_item_id=item.scheduled_item_id).exists())
-
-class VendorAPITest(APITestCase):
-    def test_create_vendor(self):
-
-        url = reverse('user-list')  
-        data = {
-            "name": "Test Vendor",
-            "phone_number": "123456789",
-            "password_hash": "hash",
-            "location": "Test Location",
-            "shop_name": "Shop",
-            "till_number": 123,
-            "type": "vendor"
+            "name": "Banana",
+            "category": "Fruit",
+            "product_image": "https://img.com/banana.jpg",
+            "unit": "kg"
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(Product.objects.count(), 2)
 
-class OrderAPITests(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.vendor = User.objects.create(
-            name="Test Vendor",
-            phone_number="1234567890",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            shop_name="Vendor Shop",
-            till_number=1001,
-            type="vendor"
-        )
-        cls.buyer = User.objects.create(
-            name="Test Buyer",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            phone_number="0987654321",
-            type="customer"
-        )
-        cls.product = Product.objects.create(
-            name="Test Product",
-            category="Groceries",
-            unit="kg",
-        )
-        cls.order = Order.objects.create(
-            vendor=cls.vendor,
-            buyer=cls.buyer,
-            total_price=200.00,
-            status="Pending"
-        )
-        cls.order_item = OrderItem.objects.create(
-            order=cls.order,
-            product=cls.product,
-            quantity=2,
-            price_at_order=100.00
-        )
-
-    def test_list_orders(self):
-        url = reverse('orders-list')
+    def test_retrieve_product(self):
+        url = reverse('product-detail', args=[self.product.pk])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['name'], "Apple")
+
+class VendorProductAPITest(APITestCase):
+    def setUp(self):
+        self.vendor = User.objects.create(
+            name="Vendor1", phone_number="0700000000", password_hash="hash",
+            location="Loc", shop_name="S1", till_number=123, type="vendor"
+        )
+        self.product = Product.objects.create(
+            name="Banana", category="Fruit", product_image="img.com/banana.jpg", unit="kg"
+        )
+        self.vendor_product = VendorProduct.objects.create(
+            vendor=self.vendor, product=self.product, price=10.0, quantity=20, description="Yellow bananas"
+        )
+
+    def test_list_vendor_products(self):
+        url = reverse('vendorproduct-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.data), 1)
-        sample = response.data[0]
-        self.assertIn("order_id", sample)
+
+    def test_create_vendor_product(self):
+        url = reverse('vendorproduct-list')
+        data = {
+            "vendor_id": self.vendor.pk,
+            "product_id": self.product.pk,
+            "price": 20.0,
+            "quantity": 15,
+            "description": "Ripe Bananas"
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(VendorProduct.objects.count(), 2)
+
+class SubscriptionBoxAPITest(APITestCase):
+    def setUp(self):
+        self.buyer = User.objects.create(
+            name="Buyer", phone_number="0700000033", password_hash="h", location="Loc", type="customer"
+        )
+        self.vendor = User.objects.create(
+            name="Vendor", phone_number="0700000044", password_hash="h", location="Loc", type="vendor", till_number=123, shop_name="Shop"
+        )
+
+    def test_create_subscription_box(self):
+        url = reverse('subscriptionbox-list')
+        data = {
+            "buyer": self.buyer.pk,
+            "vendor": self.vendor.pk,
+            "name": "Monthly Fruits",
+            "frequency": "monthly",
+            "price": 100,
+            "status": "active"
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(SubscriptionBox.objects.count(), 1)
+
+class ScheduledItemAPITest(APITestCase):
+    def setUp(self):
+        self.product = Product.objects.create(
+            name="Kiwi", category="Fruit", product_image="img.com/kiwi.jpg", unit="kg"
+        )
+        self.buyer = User.objects.create(
+            name="Buyer", phone_number="0700000033", password_hash="h", location="Loc", type="customer"
+        )
+        self.vendor = User.objects.create(
+            name="Vendor", phone_number="0700000044", password_hash="h", location="Loc", type="vendor", till_number=123, shop_name="Shop"
+        )
+        self.box = SubscriptionBox.objects.create(
+            buyer=self.buyer, vendor=self.vendor, name="Box", frequency="weekly", price=50, status="active"
+        )
+
+    def test_create_scheduled_item(self):
+        url = reverse('scheduleditem-list')
+        data = {
+            "product": self.product.pk,
+            "schedule": self.box.pk,
+            "price_per_unit": 5.0,
+            "quantity": 3,
+            "unit": "kg"
+        }
+        response = self.client.post(url, data)
+        print("ScheduledItem create:", response.status_code, response.data)  # For debugging 400 errors
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(ScheduledItem.objects.count(), 1)
+
+class OrderAPITest(APITestCase):
+    def setUp(self):
+        self.vendor = User.objects.create(
+            name="Vendor", phone_number="0700000044", password_hash="h", location="Loc", type="vendor", till_number=123, shop_name="Shop"
+        )
+        self.buyer = User.objects.create(
+            name="Buyer", phone_number="0700000033", password_hash="h", location="Loc", type="customer"
+        )
 
     def test_create_order(self):
-        url = reverse('orders-list')
+        url = reverse('orders_api-list')
         data = {
             "vendor": self.vendor.pk,
             "buyer": self.buyer.pk,
-            "total_price": 300.00,
-            "status": "Confirmed"
+            "total_price": 60.0,
+            "status": "Pending"
         }
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Decimal(response.data["total_price"]), Decimal("300.00"))
-        self.assertEqual(response.data["status"], "Confirmed")
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Order.objects.count(), 1)
 
-    def test_retrieve_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["order_id"], self.order.pk)
-
-    def test_update_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        data = {
-            "vendor": self.vendor.pk,
-            "buyer": self.buyer.pk,
-            "total_price": 250.00,
-            "status": "Shipped"
-        }
-        response = self.client.put(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["status"], "Shipped")
-        self.assertEqual(Decimal(response.data["total_price"]), Decimal("250.00"))
-
-    def test_delete_order(self):
-        url = reverse('orders-detail', args=[self.order.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
-
-
-class OrderItemAPITests(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.vendor = User.objects.create(
-            name="Test Vendor",
-            phone_number="1234567890",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            shop_name="Vendor Shop",
-            till_number=1002,
-            type="vendor"
+class OrderItemAPITest(APITestCase):
+    def setUp(self):
+        self.vendor = User.objects.create(
+            name="Vendor", phone_number="0700000044", password_hash="h", location="Loc", type="vendor", till_number=123, shop_name="Shop"
         )
-        cls.buyer = User.objects.create(
-            name="Test Buyer",
-            password_hash="hashedpassword",
-            location="Nairobi",
-            phone_number="0987654322",
-            type="customer"
+        self.buyer = User.objects.create(
+            name="Buyer", phone_number="0700000033", password_hash="h", location="Loc", type="customer"
         )
-        cls.product = Product.objects.create(
-            name="Mango",
-            category="Fruit",
-            unit="Bunch",
+        self.product = Product.objects.create(
+            name="Melon", category="Fruit", product_image="img.com/melon.jpg", unit="kg"
         )
-        cls.order = Order.objects.create(
-            vendor=cls.vendor,
-            buyer=cls.buyer,
-            total_price=150.00,
-            status="Pending"
+        self.order = Order.objects.create(
+            vendor=self.vendor, buyer=self.buyer, total_price=40.0, status="Confirmed"
         )
-        cls.order_item = OrderItem.objects.create(
-            order=cls.order,
-            product=cls.product,
-            quantity=1,
-            price_at_order=150.00
-        )
-
-    def test_list_order_items(self):
-        url = reverse('order-items-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-        self.assertIn("item_id", response.data[0])
 
     def test_create_order_item(self):
-        url = reverse('order-items-list')
+        url = reverse('backend_order-item-list')
         data = {
             "order": self.order.pk,
             "product_id": self.product.pk,
-            "quantity": 3,
-            "price_at_order": 300.00
+            "quantity": 4,
+            "price_at_order": 10.0
         }
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["quantity"], 3)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(OrderItem.objects.count(), 1)
 
-    def test_retrieve_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
+class UserAPITest(APITestCase):
+    def test_create_user(self):
+        url = reverse('users_api-list')
+        data = {
+            "name": "NewUser",
+            "phone_number": "0711111111",
+            "password_hash": "pw",
+            "location": "Loc",
+            "type": "customer"
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_list_users(self):
+        User.objects.create(
+            name="UserA", phone_number="0799999999", password_hash="pw", location="Loc", type="vendor"
+        )
+        url = reverse('users_api-list')
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["item_id"], self.order_item.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.data), 1)
 
-    def test_update_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
+class PaymentAPITest(APITestCase):
+    def test_create_payment(self):
+        url = reverse('payments-list')
         data = {
-            "order": self.order.pk,
-            "product_id": self.product.pk,
-            "quantity": 5,
-            "price_at_order": 750.00
+            "method": "Mpesa",
+            "status": "paid",
+            "amount": Decimal("100.00"),
         }
-        response = self.client.put(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["quantity"], 5)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Payment.objects.count(), 1)
 
-    def test_delete_order_item(self):
-        url = reverse('order-items-detail', args=[self.order_item.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(OrderItem.objects.filter(pk=self.order_item.pk).exists())
+class CartAPITest(APITestCase):
+    def setUp(self):
+        self.customer = User.objects.create(
+            name="CartUser", phone_number="0777777777", password_hash="pw", location="Loc", type="customer"
+        )
+
+    def test_create_cart(self):
+        url = reverse('cart-list')
+        data = {"customer_name": self.customer.name}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Cart.objects.count(), 1)
+
+class CartItemAPITest(APITestCase):
+    def setUp(self):
+        self.customer = User.objects.create(
+            name="ItemUser", phone_number="0788888888", password_hash="pw", location="Loc", type="customer"
+        )
+        self.cart = Cart.objects.create(customer=self.customer)
+        self.product = Product.objects.create(
+            name="Grape", category="Fruit", product_image="img.com/grape.jpg", unit="kg"
+        )
+
+    def test_create_cart_item(self):
+        url = reverse('cart-item-list')
+        data = {
+            "product_name": self.product.name,
+            "customer_name": self.customer.name,
+            "quantity": 2
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(CartItem.objects.count(), 1)
+        

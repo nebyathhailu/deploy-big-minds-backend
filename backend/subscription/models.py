@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from users.models import User
-from products.models import Product
+from product.models import Product
 
 FREQUENCY_CHOICES = [
     ('weekly', 'Weekly'),
@@ -21,7 +21,9 @@ class SubscriptionBox(models.Model):
         on_delete=models.CASCADE,
         related_name='customer_subscriptions',
         limit_choices_to={'type': 'customer'},
-        help_text="User of type 'customer'"
+        help_text="User of type 'customer'",
+        blank=True,
+        null=True
     )
     vendor = models.ForeignKey(
         User,
@@ -29,9 +31,12 @@ class SubscriptionBox(models.Model):
         related_name='vendor_subscriptions',
         limit_choices_to={'type': 'vendor'},
         help_text="User of type 'vendor'",
+        blank=True,
+        null=True
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscription')
+    # Removed the redundant 'user' field
+
     name = models.CharField(max_length=100)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     price = models.PositiveIntegerField()
@@ -39,7 +44,8 @@ class SubscriptionBox(models.Model):
     status = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"Subscription {self.name} for {self.user.name}"
+        # Use buyer for the string representation
+        return f"Subscription {self.name} for {self.buyer.name}"
 
     def clean(self):
         super().clean()
