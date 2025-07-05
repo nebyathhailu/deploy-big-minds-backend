@@ -20,7 +20,8 @@ SECRET_KEY = 'django-insecure-+(a39&q@ainwdm^ldn)d@5cot*ba+1m))h$d)tm-5*#$$8bby&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['backend.herokuapp.com',
-                 'safi-greens-app.onrender.com']
+                 'safi-greens-app.onrender.com',
+                 '127.0.0.1']
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
