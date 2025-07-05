@@ -12,9 +12,9 @@ packaging==25.0
 pillow==11.3.0
 psycopg==3.2.9
 psycopg2-binary==2.9.10
+python-decouple==3.8
 requests==2.32.4
 sqlparse==0.5.3
 typing-extensions==4.14.1
 urllib3==2.5.0
 whitenoise==6.9.0
-python-decouple
